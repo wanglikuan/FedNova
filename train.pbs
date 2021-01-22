@@ -1,0 +1,51 @@
+##!/bin/sh
+#PBS -N NovaSGD_8w_VGG_iid_exp
+#PBS -l nodes=1:ppn=9 -W x=GRES:gpu@1
+#PBS -l walltime=36:00:00
+#PBS -q qgpu01
+#PBS -V
+#PBS -S /bin/bash
+
+module load anaconda3-5.2.0
+module load cuda-9.0
+module load openmpi-3.0.1-gcc-5.5.0
+source activate py_gpu
+#################################################################
+NP=`cat $PBS_NODEFILE | wc -l`
+NN=`cat $PBS_NODEFILE | sort | uniq | tee /tmp/nodes.$$ | wc -l`
+cat $PBS_NODEFILE > /tmp/nodefile.$$
+echo "process will start at : "
+date
+echo "++++++++++++++++++++++++++++++++++++++++"
+cd $PBS_O_WORKDIR
+
+nvidia-smi > nv.out
+
+# This is the sample for DGS
+
+#mpirun -n $NP python -u start.py --local-iteration=linear > Output_Res_8w_niid_linear.out
+
+#mpirun -n $NP python -u start.py --local-iteration=LL > Output_Res_8w_niid_LL.out
+
+#mpirun -n $NP python -u start.py --local-iteration=SL > Output_Res_8w_niid_SL.out
+
+#mpirun -n $NP python -u start.py --num-gpu=1 --lr=0.1 --local-iteration=SL --epoch=150 --iid=True > Output_Res_8w_iid_SL_lr01.out
+
+#mpirun -n $NP python -u start.py --num-gpu=1 --lr=0.1 --local-iteration=LL --epoch=150 --iid=True > Output_Res_8w_iid_LL_lr01.out
+
+mpirun -n $NP python -u start.py --num-gpu=1 --lr=0.1 --model=VGG11OnCifar10 --local-iteration=exp --epochs=150 --iid=True > Output_VGG_8w_iid_exp_lr01.out
+
+#mpirun -n $NP python -u start.py --model=VGG11OnCifar10 --local-iteration=linear > Output_VGG_8w_niid_linear.out
+
+#mpirun -n $NP python -u start.py --model=VGG11OnCifar10 --local-iteration=LL > Output_VGG_8w_niid_LL.out
+
+#mpirun -n $NP python -u start.py --model=VGG11OnCifar10 --local-iteration=SL > Output_VGG_8w_niid_SL.out
+
+echo "++++++++++++++++++++++++++++++++++++++++"
+echo "process end at : "
+date
+rm -f /tmp/nodefile.$$
+rm -f /tmp/nodes.$$
+
+module unload openmpi-3.0.1-gcc-5.5.0
+module unload cuda-9.0
